@@ -9,3 +9,7 @@
 **Wikipedia :** [Prisoner's Dilemma](https://en.wikipedia.org/wiki/Prisoner%27s_dilemma)
 
 **The Stanford Encyclopedia of Philosophy :** [Prisoner’s Dilemma - Kuhn, Steven](https://plato.stanford.edu/entries/prisoner-dilemma/) 
+
+**Axelrod Python library :** [Axelrod Python library](https://axelrod.readthedocs.io/en/stable/)
+
+**Standard Tournaments (Axelrod Python library):** [Standard Tournaments](https://axelrod-tournament.readthedocs.io/en/stable/standard/index.html)
