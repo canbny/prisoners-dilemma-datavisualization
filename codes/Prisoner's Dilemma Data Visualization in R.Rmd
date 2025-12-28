@@ -1,0 +1,212 @@
+---
+title: "Prisoner's Dilemma Data Visualization in R"
+author: "Can Binay"
+date: "2025-12-25"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Installing Necessary Packages
+
+```{r echo=TRUE, results='hide', message=FALSE, warning=FALSE}
+install.packages("pacman", repos = "http://cran.us.r-project.org")
+pacman::p_load(readr, ggplot2, dplyr, tidyverse, ggtext, ggimage)
+```
+
+# Dataset
+
+```{r}
+dilemma <- 
+  read.csv("https://raw.githubusercontent.com/canbny/prisoners-dilemma-datavisualization/refs/heads/main/dilemma.csv", sep=";")
+```
+
+## Payoff Matrix for Each Move of the Prisoner's Dilemma
+
+```{r}
+payoff_matrix <- data.frame(
+  Strategy = c("Cooperate", "Defect"),
+  Cooperate = c("(3,3)", "(5,0)"),
+  Defect = c("(0,5)", "(1,1)")
+)
+
+payoff_matrix
+```
+
+## Data Manipulation
+
+I made a data manipulation for better visualization. I separated the players in the datasets in two groups like nice ones and nasty ones.
+
+```{r}
+dilemma_group <- dilemma %>%
+  arrange(desc(avg_score)) %>% 
+  mutate(
+    rank_group = ifelse(row_number() <= 8, "Nice", "Nasty")
+  )
+```
+
+```{r}
+visual_cat <- tibble(
+  player = dilemma_group$player, 
+  img_url = c(
+    "https://raw.githubusercontent.com/canbny/prisoners-dilemma-datavisualization/main/keddy/gkeddy1.png", 
+    "https://raw.githubusercontent.com/canbny/prisoners-dilemma-datavisualization/main/keddy/gkeddy2.png", 
+    "https://raw.githubusercontent.com/canbny/prisoners-dilemma-datavisualization/main/keddy/gkeddy5.png", 
+    "https://raw.githubusercontent.com/canbny/prisoners-dilemma-datavisualization/main/keddy/gkeddy4.png",  
+    "https://raw.githubusercontent.com/canbny/prisoners-dilemma-datavisualization/main/keddy/gkeddy3.png", 
+    "https://raw.githubusercontent.com/canbny/prisoners-dilemma-datavisualization/main/keddy/gkeddy6.png", 
+    "https://raw.githubusercontent.com/canbny/prisoners-dilemma-datavisualization/main/keddy/gkeddy7.png", 
+    "https://raw.githubusercontent.com/canbny/prisoners-dilemma-datavisualization/main/keddy/gkeddy8.png",
+    "https://raw.githubusercontent.com/canbny/prisoners-dilemma-datavisualization/main/keddy/bkeddy1.png", 
+    "https://raw.githubusercontent.com/canbny/prisoners-dilemma-datavisualization/main/keddy/bkeddy2.png", 
+    "https://raw.githubusercontent.com/canbny/prisoners-dilemma-datavisualization/main/keddy/bkeddy3.png", 
+    "https://raw.githubusercontent.com/canbny/prisoners-dilemma-datavisualization/main/keddy/bkeddy4.png",  
+    "https://raw.githubusercontent.com/canbny/prisoners-dilemma-datavisualization/main/keddy/bkeddy5.png", 
+    "https://raw.githubusercontent.com/canbny/prisoners-dilemma-datavisualization/main/keddy/bkeddy6.png", 
+    "https://raw.githubusercontent.com/canbny/prisoners-dilemma-datavisualization/main/keddy/bkeddy8.png"
+  )
+)
+
+plot_data <- dilemma_group %>%
+  left_join(visual_cat, by = "player") %>%
+  mutate(
+    html_label = paste0(
+      "<img src='", img_url, "' width='150' /> ",
+      " <span style='font-size:24pt'>", player, "</span>"
+    )
+  )
+```
+
+```{r}
+plot_data <- dilemma_group %>%
+  left_join(visual_cat, by = "player") %>%
+  arrange(desc(avg_score)) %>%
+  mutate(player = factor(player, levels = rev(unique(player))))
+```
+
+# Without Avatars
+
+```{r}
+ggplot(dilemma_group, aes(x = reorder(player, +avg_score), y = avg_score, fill = rank_group)) +
+  geom_col() +
+  coord_flip() + 
+  scale_fill_manual(values = c("Nice" = "#2ecc71", "Nasty" = "#e74c3c")) +
+  scale_color_manual(values = c("Nice" = "#2ecc71", "Nasty" = "#e74c3c")) +
+  geom_text(aes(label = round(avg_score, 0), color = rank_group), 
+            hjust = -0.2, 
+            size = 3.5, 
+            fontface = "bold") +
+  labs(
+    title = "Tournament Average Scores",
+    x = NULL, 
+    y = "Score",
+    fill = "Group"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+    axis.text.y = element_text(size = 11, face = "italic", hjust = 1) 
+  ) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15)))
+```
+
+# With Avatars
+
+```{r}
+ggplot(plot_data, aes(x = avg_score, y = player, fill = rank_group)) +
+  geom_col() +
+  geom_text(
+  aes(x = 0, label = player),
+  hjust = 0,
+  color = "white",
+  size = 4.5,
+  fontface = "bold"
+) +
+  geom_text(
+    aes(label = round(avg_score, 0), color = rank_group),
+    hjust = -0.2,
+    size = 4,
+    fontface = "bold"
+  ) +
+  geom_image(aes(x = -24, image = img_url), size = 0.07) +
+  scale_fill_manual(values = c("Nice" = "#2ecc71", "Nasty" = "#e74c3c")) +
+  scale_color_manual(values = c("Nice" = "#2ecc71", "Nasty" = "#e74c3c")) +
+  labs(
+    title = "Tournament Average Scores",
+    x = "Score",
+    y = NULL
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(face = "bold", size = 28, hjust = 0.5),
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    plot.margin = margin(10, 40, 10, 40)
+  )
+
+```
+
+# Saving Image
+
+```{r}
+ggplot(plot_data, aes(x = avg_score, y = player, fill = rank_group)) +
+  geom_col(width = 0.95) +
+  geom_text(
+    aes(x = 10, label = player),
+    hjust = 0,
+    color = "white",
+    size = 15,
+    fontface = "bold"
+  ) +
+  geom_text(
+    aes(label = round(avg_score, 0)),
+    hjust = 1.2,
+    color = "white",
+    size = 15,
+    fontface = "bold"
+  ) +
+  geom_image(
+    aes(x = -15, image = img_url),
+    size = 0.062,
+    by = "height"
+  ) +
+
+  scale_fill_manual(values = c("Nice" = "#2ecc71", "Nasty" = "#e74c3c")) +
+  scale_x_continuous(
+    limits = c(-35, 520),
+    expand = c(0, 0)
+  ) +
+  scale_y_discrete(expand = expansion(add = 0.6)) +
+  labs(
+    title = "Tournament Average Scores",
+    x = NULL,
+    y = NULL
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.title = element_blank(),
+    axis.text  = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(face = "bold", size = 50, hjust = 0.5, margin = margin(b = 30)),
+    plot.margin = margin(t = 3, r = 5, b = 3, l = 3, unit = "cm")
+  )
+
+ggsave(
+  filename = "Tournament_Average_Scores.png",
+  plot = last_plot(),
+  width = 841,
+  height = 594,
+  units = "mm",
+  dpi = 300,
+  bg = "white"
+)
+```
+
